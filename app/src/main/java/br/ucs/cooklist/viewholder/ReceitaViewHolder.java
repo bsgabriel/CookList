@@ -7,12 +7,8 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.bumptech.glide.Glide;
-import com.bumptech.glide.load.resource.bitmap.CenterCrop;
-import com.bumptech.glide.load.resource.bitmap.RoundedCorners;
-import com.bumptech.glide.request.RequestOptions;
-
 import br.ucs.cooklist.R;
+import br.ucs.cooklist.helper.ImageHelper;
 import br.ucs.cooklist.model.Receita;
 
 public class ReceitaViewHolder extends RecyclerView.ViewHolder {
@@ -27,6 +23,10 @@ public class ReceitaViewHolder extends RecyclerView.ViewHolder {
         init();
     }
 
+    public View getItemView() {
+        return itemView;
+    }
+
     private void init() {
         txtNomeReceitaLista = itemView.findViewById(R.id.txtNomeReceitaLista);
         txtDesReceitaLista = itemView.findViewById(R.id.txtDesReceitaLista);
@@ -37,13 +37,9 @@ public class ReceitaViewHolder extends RecyclerView.ViewHolder {
         txtNomeReceitaLista.setText(receita.getNomeReceita());
         txtDesReceitaLista.setText(receita.getDesReceita());
 
-        if(receita.getImgReceita() != null){
-            Glide.with(itemView.getContext())//
-                    .load(receita.getImgReceita())//
-                    .apply(new RequestOptions().transform(new CenterCrop(), new RoundedCorners(20)))//
-                    .into(imgViewReceitaLista);
+        if (receita.getBase64Receita() != null && !receita.getBase64Receita().trim().isEmpty()) {
+            ImageHelper.loadToImageView(itemView.getContext(), receita.getBase64Receita(), imgViewReceitaLista);
         }
     }
-
 
 }

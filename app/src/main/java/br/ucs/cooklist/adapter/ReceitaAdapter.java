@@ -11,12 +11,15 @@ import java.util.ArrayList;
 import java.util.List;
 
 import br.ucs.cooklist.R;
+import br.ucs.cooklist.interfaces.RecyclerViewActions;
 import br.ucs.cooklist.model.Receita;
 import br.ucs.cooklist.viewholder.ReceitaViewHolder;
 
 public class ReceitaAdapter extends RecyclerView.Adapter<ReceitaViewHolder> {
     private List<Receita> lstReceitas;
     private Context context;
+
+    private RecyclerViewActions actions;
 
     public ReceitaAdapter(Context context) {
         this.context = context;
@@ -39,10 +42,19 @@ public class ReceitaAdapter extends RecyclerView.Adapter<ReceitaViewHolder> {
     @Override
     public void onBindViewHolder(@NonNull ReceitaViewHolder holder, int position) {
         holder.bind(getLstReceitas().get(position));
+        holder.getItemView().setOnClickListener(view -> {
+            if (actions != null) {
+                actions.onItemClick(view, position);
+            }
+        });
     }
 
     @Override
     public int getItemCount() {
         return getLstReceitas().size();
+    }
+
+    public void setActions(RecyclerViewActions actions) {
+        this.actions = actions;
     }
 }
