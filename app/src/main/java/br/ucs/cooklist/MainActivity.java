@@ -7,7 +7,6 @@ import android.widget.Button;
 import android.widget.EditText;
 
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.app.BundleCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -15,6 +14,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import br.ucs.cooklist.adapter.ReceitaAdapter;
+import br.ucs.cooklist.helper.DatabaseHelper;
 import br.ucs.cooklist.helper.ImageHelper;
 import br.ucs.cooklist.model.Ingrediente;
 import br.ucs.cooklist.model.Receita;
@@ -26,6 +26,7 @@ public class MainActivity extends AppCompatActivity {
     private RecyclerView rcReceitas;
     private Button btnNovaReceita;
     private ReceitaAdapter receitaAdapter;
+    private DatabaseHelper databaseHelper;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -33,7 +34,7 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         init();
 
-        List<Receita> lstReceitas = buscarReceitas();
+        List<Receita> lstReceitas = getDatabaseHelper().buscarReceitas();
         receitaAdapter.getLstReceitas().addAll(lstReceitas);
         receitaAdapter.notifyDataSetChanged();
     }
@@ -60,7 +61,6 @@ public class MainActivity extends AppCompatActivity {
 
         receitaAdapter.setActions((view, position) -> {
             Receita receita = receitaAdapter.getLstReceitas().get(position);
-
             Intent intent = new Intent(MainActivity.this, CadastroReceitaActivity.class);
             intent.putExtra("receita", receita.toBundle());
             startActivity(intent);
@@ -93,4 +93,12 @@ public class MainActivity extends AppCompatActivity {
         }
         return receitas;
     }
+
+    private DatabaseHelper getDatabaseHelper() {
+        if (databaseHelper == null) {
+            databaseHelper = new DatabaseHelper(this);
+        }
+        return databaseHelper;
+    }
+
 }
