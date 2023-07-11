@@ -21,8 +21,6 @@ import br.ucs.cooklist.model.Receita;
 
 public class MainActivity extends AppCompatActivity {
 
-    private EditText inputPesquisa;
-    private Button btnPesquisar;
     private RecyclerView rcReceitas;
     private Button btnNovaReceita;
     private ReceitaAdapter receitaAdapter;
@@ -62,7 +60,10 @@ public class MainActivity extends AppCompatActivity {
         receitaAdapter.setActions((view, position) -> {
             Receita receita = receitaAdapter.getLstReceitas().get(position);
             Intent intent = new Intent(MainActivity.this, CadastroReceitaActivity.class);
-            intent.putExtra("receita", receita.toBundle());
+
+            // não será mais usado pois o objeto sendo passado pode ser muito grande.
+            // intent.putExtra("receita", receita.toBundle());
+            intent.putExtra("codReceita", receita.getCodReceita());
             startActivity(intent);
         });
     }
