@@ -184,7 +184,40 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         return receita;
     }
 
-    public void reset(){
+    public void atualizarReceita(Receita receita) {
+        SQLiteDatabase db = getWritableDatabase();
+
+        try {
+            // Atualizar a receita na tabela Receitas
+            ContentValues receitaValues = new ContentValues();
+            receitaValues.put(COL_NOME_RECEITA, receita.getNomeReceita());
+            receitaValues.put(COL_DES_RECEITA, receita.getDesReceita());
+            receitaValues.put(COL_DES_IMG_RECEITA, receita.getBase64Receita());
+
+            String params[] = new String[1];
+            params[0] = receita.getCodReceita().toString();
+
+            db.update(TABLE_RECEITAS, receitaValues, COL_ID_RECEITA + " = ?", params);
+
+            // Remover os ingredientes antigos da receita na tabela Ingredientes
+            db.delete(TABLE_INGREDIENTES, COL_ID_RECEITA_INGREDIENTE + " = ?", params);
+
+            // Inserir os novos ingredientes da receita na tabela Ingredientes
+            List<Ingrediente> ingredientes = receita.getLstIngredientes();
+            for (Ingrediente ingrediente : ingredientes) {
+                ContentValues ingredienteValues = new ContentValues();
+                ingredienteValues.put(COL_DES_INGREDIENTE, ingrediente.getDescIngrediente());
+                ingredienteValues.put(COL_ID_RECEITA_INGREDIENTE, receita.getCodReceita());
+                db.insert(TABLE_INGREDIENTES, null, ingredienteValues);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            db.close();
+        }
+    }
+
+    public void reset() {
         this.onUpgrade(getWritableDatabase(), 0, 1);
     }
 

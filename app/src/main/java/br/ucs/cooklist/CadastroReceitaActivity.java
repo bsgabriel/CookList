@@ -109,8 +109,15 @@ public class CadastroReceitaActivity extends AppCompatActivity {
             Bitmap bmp = ((BitmapDrawable) dr.getCurrent()).getBitmap();
             receita.setBase64Receita(toBase64(bmp));
 
+            receita.getLstIngredientes().clear(); // limpa os ingredientes para salvar posteriormente
             ingredienteAdapter.getLstIngredientes().forEach(ingrediente -> receita.getLstIngredientes().add(ingrediente));
-            getDatabaseHelper().inserirReceita(receita);
+
+            if (receita.getCodReceita() == null) {
+                getDatabaseHelper().inserirReceita(receita);
+            } else {
+                getDatabaseHelper().atualizarReceita(receita);
+            }
+
             iniciarActivityLista();
         });
 
