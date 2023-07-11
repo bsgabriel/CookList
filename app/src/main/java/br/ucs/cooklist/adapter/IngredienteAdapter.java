@@ -39,6 +39,10 @@ public class IngredienteAdapter extends RecyclerView.Adapter<IngredienteViewHold
     @Override
     public void onBindViewHolder(@NonNull IngredienteViewHolder holder, int position) {
         holder.bind(getLstIngredientes().get(position));
+        holder.setActionRemove(() -> {
+            this.getLstIngredientes().remove(position);
+            this.notifyDataSetChanged();
+        });
     }
 
     @Override
@@ -46,8 +50,8 @@ public class IngredienteAdapter extends RecyclerView.Adapter<IngredienteViewHold
         return getLstIngredientes().size();
     }
 
-    public void addItem(Ingrediente receita) {
-        this.getLstIngredientes().add(receita);
+    public void addItem(Ingrediente ingrediente) {
+        this.getLstIngredientes().add(ingrediente);
         this.notifyDataSetChanged();
     }
 
