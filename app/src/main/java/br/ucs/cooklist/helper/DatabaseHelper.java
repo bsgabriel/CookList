@@ -6,122 +6,130 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
-import java.util.SplittableRandom;
+import java.util.ArrayList;
+import java.util.List;
+
+import br.ucs.cooklist.model.Ingrediente;
+import br.ucs.cooklist.model.Receita;
 
 public class DatabaseHelper extends SQLiteOpenHelper {
 
-   public static final String DATABASE_NAME = "cookbook_ucs";
+    public static final String DATABASE_NAME = "cookbook_ucs";
 
-   public static final String TABLE1_NAME = "cookbook_recipe";
-   public static final String COL1_T1 = "id";
-   public static final String COL2_T1 = "nome";
-   public static final String COL3_T1 = "ingredientes";
-   public static final String COL4_T1 = "tempo_preparo";
-   public static final String COL5_T1 = "des_img";
+    public static final String TABLE_RECEITAS = "cookbook_recipe";
+    public static final String COL_ID_RECEITA = "id";
+    public static final String COL_NOME_RECEITA = "nome";
+    public static final String COL_DES_RECEITA = "des_receita";
+    public static final String COL_DES_IMG_RECEITA = "des_img";
 
-   public static final String TABLE2_NAME = "cookbook_ingredients";
-   public static final String COL1_T2 = "id";
-   public static final String COL2_T2 = "nome";
-   public static final String COL3_T2 = "descricao";
+    public static final String TABLE_INGREDIENTES = "cookbook_ingredients";
+    public static final String COL_ID_INGREDIENTE = "id";
+    public static final String COL_DES_INGREDIENTE = "descricao";
+    public static final String COL_ID_RECEITA_INGREDIENTE = "id_receita";
 
-   public DatabaseHelper(Context context) {super(context, DATABASE_NAME, null, 1);}
+    public DatabaseHelper(Context context) {
+        super(context, DATABASE_NAME, null, 1);
+    }
 
-   @Override
-   public void onCreate (SQLiteDatabase db) {
-      String createTable = "CREATE TABLE " + TABLE1_NAME + " ("
-              + COL1_T1 + " INTEGER PRIMARY KEY AUTOINCREMENT, "
-              + COL2_T1 + " TEXT,"
-              + COL3_T1 + " TEXT,"
-              + COL4_T1 + " TEXT,"
-              + COL5_T1 + " TEXT );";
+    @Override
+    public void onCreate(SQLiteDatabase db) {
+        // Criação da tabela Receitas
+        String createTableReceitas = "CREATE TABLE " + TABLE_RECEITAS + " (" + COL_ID_RECEITA + " INTEGER PRIMARY KEY AUTOINCREMENT, " + COL_NOME_RECEITA + " TEXT, " + COL_DES_RECEITA + " TEXT, " + COL_DES_IMG_RECEITA + " TEXT" + ")";
+        db.execSQL(createTableReceitas);
 
-      String createTable2 = "CREATE TABLE " + TABLE2_NAME + " ("
-              + COL1_T2 + " INTEGER PRIMARY KEY AUTOINCREMENT, "
-              + COL2_T2 + " TEXT,"
-              + COL3_T2 + " TEXT );";
+        // Criação da tabela Ingredientes
+        String createTableIngredientes = "CREATE TABLE " + TABLE_INGREDIENTES + " (" + COL_ID_INGREDIENTE + " INTEGER PRIMARY KEY AUTOINCREMENT, " + COL_DES_INGREDIENTE + " TEXT, " + COL_ID_RECEITA_INGREDIENTE + " INTEGER, " + "FOREIGN KEY(" + COL_ID_RECEITA_INGREDIENTE + ") REFERENCES " + TABLE_RECEITAS + "(" + COL_ID_RECEITA + ")" + ")";
+        db.execSQL(createTableIngredientes);
+    }
 
-      db.execSQL(createTable);
-      db.execSQL(createTable2);
-   }
+    @Override
+    public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+        db.execSQL("DROP TABLE IF EXISTS " + TABLE_INGREDIENTES);
+        db.execSQL("DROP TABLE IF EXISTS " + TABLE_RECEITAS);
+        onCreate(db);
+    }
 
-   @Override
-   public void onUpgrade (SQLiteDatabase db, int oldVersion, int newVersion){
-      db.execSQL("DROP TABLE IF EXISTS " + TABLE1_NAME);
-      db.execSQL("DROP TABLE IF EXISTS " + TABLE2_NAME);
-      onCreate(db);
-   }
+    public void inserirReceita(Receita receita) {
+        SQLiteDatabase db = getWritableDatabase();
+        long receitaId = -1;
 
-   public boolean addDataTableRecipe (String nome, String ingredientes, String tempoPreparo, String desImage) {
-      SQLiteDatabase db = this.getWritableDatabase();
-      ContentValues contentValues = new ContentValues();
-      contentValues.put(COL2_T1, nome);
-      contentValues.put(COL3_T1, ingredientes);
-      contentValues.put(COL4_T1, tempoPreparo);
-      contentValues.put(COL5_T1, desImage);
+        try {
+            // Inserir a receita na tabela Receitas
+            ContentValues receitaValues = new ContentValues();
+            receitaValues.put(COL_NOME_RECEITA, receita.getNomeReceita());
+            receitaValues.put(COL_DES_RECEITA, receita.getDesReceita());
+            receitaValues.put(COL_DES_IMG_RECEITA, receita.getBase64Receita());
+            receitaId = db.insert(TABLE_RECEITAS, null, receitaValues);
 
-      long result = db.insert(TABLE1_NAME, null, contentValues);
+            // Inserir os ingredientes relacionados à receita na tabela Ingredientes
+            List<Ingrediente> ingredientes = receita.getLstIngredientes();
+            for (Ingrediente ingrediente : ingredientes) {
+                ContentValues ingredienteValues = new ContentValues();
+                ingredienteValues.put(COL_DES_INGREDIENTE, ingrediente.getDescIngrediente());
+                ingredienteValues.put(COL_ID_RECEITA_INGREDIENTE, receitaId);
+                db.insert(TABLE_INGREDIENTES, null, ingredienteValues);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            db.close();
+        }
+    }
 
-      if (result == - 1){
-         return false;
-      }  else {
-         return true;
-      }
-   }
+    public List<Receita> buscarReceitas() {
+        List<Receita> receitas = new ArrayList<>();
+        SQLiteDatabase db = getReadableDatabase();
 
-   public Cursor getListAllRecipes(){
-      SQLiteDatabase db = this.getWritableDatabase();
-      Cursor data = db.rawQuery("SELECT * FROM " + TABLE1_NAME, null);
-      return data;
-   }
+        try {
+            // Consultar todas as receitas
+            String query = "SELECT * FROM " + TABLE_RECEITAS;
+            Cursor cursor = db.rawQuery(query, null);
 
-   public void onDeleteAllRecipes (SQLiteDatabase db){
-      db.execSQL("DELETE FROM " + TABLE1_NAME);
-   }
+            while (cursor.moveToNext()) {
+                // Obter os dados da receita
+                int codReceita = cursor.getInt(cursor.getColumnIndexOrThrow(COL_ID_RECEITA));
+                String nomeReceita = cursor.getString(cursor.getColumnIndexOrThrow(COL_NOME_RECEITA));
+                String desReceita = cursor.getString(cursor.getColumnIndexOrThrow(COL_DES_RECEITA));
+                String desImg = cursor.getString(cursor.getColumnIndexOrThrow(COL_DES_IMG_RECEITA));
 
-   // Para fazer o update ele vai fazer o where com o nome antes da alteração (variável nomeAnterior que é recebida por parâmetro)
-   public void alteraRecipe(String nomeAnterior, String nome, String ingredientes, String tempoPreparo, String desImage){
-      SQLiteDatabase db = this.getWritableDatabase();
-      ContentValues valores= new ContentValues();
+                // Criar um objeto Receita com os dados obtidos
+                Receita receita = new Receita();
+                receita.setCodReceita(codReceita);
+                receita.setNomeReceita(nomeReceita);
+                receita.setDesReceita(desReceita);
+                receita.setBase64Receita(desImg);
 
-      valores.put(COL2_T1, nome);
-      valores.put(COL3_T1, ingredientes);
-      valores.put(COL4_T1, tempoPreparo);
-      valores.put(COL5_T1, desImage);
+                // Consultar os ingredientes associados à receita atual
+                String ingredientesQuery = "SELECT * FROM " + TABLE_INGREDIENTES + " WHERE " + COL_ID_RECEITA_INGREDIENTE + " = " + codReceita;
+                Cursor ingredientesCursor = db.rawQuery(ingredientesQuery, null);
 
-      db.update(TABLE1_NAME, valores, "nome=?", new String[]{nomeAnterior});
-      db.close();
-   }
+                while (ingredientesCursor.moveToNext()) {
+                    // Obter os dados do ingrediente
+                    int codIngrediente = ingredientesCursor.getInt(ingredientesCursor.getColumnIndexOrThrow(COL_ID_INGREDIENTE));
+                    String descIngrediente = ingredientesCursor.getString(ingredientesCursor.getColumnIndexOrThrow(COL_DES_INGREDIENTE));
 
-   // Para fazer o delete de um registo ele vai fazer o where com o nome da receita (variável nome que é recebida por parâmetro)
-   public void deleteOneRecipe(String nome) {
-      SQLiteDatabase db = this.getWritableDatabase();
+                    // Criar um objeto Ingrediente com os dados obtidos e adicioná-lo à lista de ingredientes da receita
+                    Ingrediente ingrediente = new Ingrediente();
+                    ingrediente.setCodIngrediente(codIngrediente);
+                    ingrediente.setDescIngrediente(descIngrediente);
+                    ingrediente.setCodReceita(codReceita);
+                    receita.getLstIngredientes().add(ingrediente);
+                }
 
-      db.delete(TABLE1_NAME, "nome=?", new String[]{nome});
-      db.close();
-   }
+                ingredientesCursor.close();
 
-   public boolean addDataTableIngredient(String nome, String descricao){
-      SQLiteDatabase db = this.getWritableDatabase();
-      ContentValues contentValues = new ContentValues();
-      contentValues.put(COL2_T2, nome);
-      contentValues.put(COL3_T2, descricao);
+                // Adicionar a receita à lista de receitas
+                receitas.add(receita);
+            }
 
-      long result = db.insert(TABLE2_NAME, null, contentValues);
+            cursor.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            db.close();
+        }
 
-      if (result == - 1){
-         return false;
-      }  else {
-         return true;
-      }
-   }
+        return receitas;
+    }
 
-   public Cursor getListAllIngredients(){
-      SQLiteDatabase db = this.getWritableDatabase();
-      Cursor data = db.rawQuery("SELECT * FROM " + TABLE2_NAME, null);
-      return data;
-   }
-
-   public void onDeleteIngredients (SQLiteDatabase db){
-      db.execSQL("DELETE FROM " + TABLE2_NAME);
-   }
 }
