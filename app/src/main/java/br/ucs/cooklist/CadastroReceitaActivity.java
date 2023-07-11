@@ -111,13 +111,10 @@ public class CadastroReceitaActivity extends AppCompatActivity {
 
             ingredienteAdapter.getLstIngredientes().forEach(ingrediente -> receita.getLstIngredientes().add(ingrediente));
             getDatabaseHelper().inserirReceita(receita);
-
+            iniciarActivityLista();
         });
 
-        btnCancelarReceita.setOnClickListener(view -> {
-            Intent intent = new Intent(CadastroReceitaActivity.this, MainActivity.class);
-            startActivity(intent);
-        });
+        btnCancelarReceita.setOnClickListener(view -> iniciarActivityLista());
 
         btnAdicionarIngrediente.setOnClickListener(view -> {
             AlertDialog.Builder builder = new AlertDialog.Builder(this);
@@ -146,18 +143,45 @@ public class CadastroReceitaActivity extends AppCompatActivity {
         });
     }
 
-    private void carregarReceita() {
+    /**
+     * Em desuso, pois passar o objeto receita pode causar problemas, devido ao tamanho do objeto.
+     */
+    private void _carregarReceita() {
         Bundle extras = getIntent().getExtras();
         if (extras == null) {
             return;
         }
 
         if (!extras.containsKey("receita")) {
-            // TODO log: não encontrou key receita
             return;
         }
 
         receita = new Receita().fromBundle(extras.getBundle("receita"));
+
+        if (receita.getBase64Receita() != null && !receita.getBase64Receita().trim().isEmpty()) {
+            loadToImageView(this, receita.getBase64Receita(), imgViewCadastroReceita);
+        }
+
+        inputNomeReceita.setText(receita.getNomeReceita());
+        inputDescricaoReceita.setText(receita.getDesReceita());
+        receita.getLstIngredientes().forEach(ingrediente -> {
+            ingredienteAdapter.addItem(ingrediente);
+        });
+    }
+
+    private void carregarReceita() {
+        Bundle extras = getIntent().getExtras();
+        if (extras == null) {
+            return;
+        }
+
+        if (!extras.containsKey("codReceita")) {
+            // TODO log: não encontrou key receita
+            return;
+        }
+
+        Integer codReceita = extras.getInt("codReceita");
+        receita = getDatabaseHelper().buscarReceita(codReceita);
 
         if (receita.getBase64Receita() != null && !receita.getBase64Receita().trim().isEmpty()) {
             loadToImageView(this, receita.getBase64Receita(), imgViewCadastroReceita);
@@ -229,4 +253,8 @@ public class CadastroReceitaActivity extends AppCompatActivity {
         return databaseHelper;
     }
 
+    private void iniciarActivityLista() {
+        Intent intent = new Intent(CadastroReceitaActivity.this, MainActivity.class);
+        startActivity(intent);
+    }
 }
