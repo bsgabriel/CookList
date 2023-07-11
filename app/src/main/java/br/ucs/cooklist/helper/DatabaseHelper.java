@@ -132,4 +132,61 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         return receitas;
     }
 
+    public Receita buscarReceita(Integer codReceita) {
+        SQLiteDatabase db = getReadableDatabase();
+        Receita receita = null;
+
+        try {
+            // Consultar a receita pelo código
+            String query = "SELECT * FROM " + TABLE_RECEITAS + " WHERE " + COL_ID_RECEITA + " = " + codReceita;
+            Cursor cursor = db.rawQuery(query, null);
+
+            if (cursor.moveToFirst()) {
+                // Obter os dados da receita
+                String nomeReceita = cursor.getString(cursor.getColumnIndexOrThrow(COL_NOME_RECEITA));
+                String desReceita = cursor.getString(cursor.getColumnIndexOrThrow(COL_DES_RECEITA));
+                String desImg = cursor.getString(cursor.getColumnIndexOrThrow(COL_DES_IMG_RECEITA));
+
+                // Criar um objeto Receita com os dados obtidos
+                receita = new Receita();
+                receita.setCodReceita(codReceita);
+                receita.setNomeReceita(nomeReceita);
+                receita.setDesReceita(desReceita);
+                receita.setBase64Receita(desImg);
+
+                // Consultar os ingredientes associados à receita
+                String ingredientesQuery = "SELECT * FROM " + TABLE_INGREDIENTES + " WHERE " + COL_ID_RECEITA_INGREDIENTE + " = " + codReceita;
+                Cursor ingredientesCursor = db.rawQuery(ingredientesQuery, null);
+
+                while (ingredientesCursor.moveToNext()) {
+                    // Obter os dados do ingrediente
+                    int codIngrediente = ingredientesCursor.getInt(ingredientesCursor.getColumnIndexOrThrow(COL_ID_INGREDIENTE));
+                    String descIngrediente = ingredientesCursor.getString(ingredientesCursor.getColumnIndexOrThrow(COL_DES_INGREDIENTE));
+
+                    // Criar um objeto Ingrediente com os dados obtidos e adicioná-lo à lista de ingredientes da receita
+                    Ingrediente ingrediente = new Ingrediente();
+                    ingrediente.setCodIngrediente(codIngrediente);
+                    ingrediente.setDescIngrediente(descIngrediente);
+                    ingrediente.setCodReceita(codReceita);
+                    receita.getLstIngredientes().add(ingrediente);
+                }
+
+                ingredientesCursor.close();
+            }
+
+            cursor.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            db.close();
+        }
+
+        return receita;
+    }
+
+    public void reset(){
+        this.onUpgrade(getWritableDatabase(), 0, 1);
+    }
+
+
 }
